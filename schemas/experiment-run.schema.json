@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cvl.aserdargun.com/schemas/experiment-run.schema.json",
+  "title": "CVL experiment run",
+  "description": "One measured layer on one synthetic scene. Every numeric field is a measurement against the answer key that was painted with the scene; none of them is a self-assessment. A field that could not be measured is null, never NaN and never a carried-over value.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "experimentId",
+    "sceneSeed",
+    "engineId",
+    "engineDescribe",
+    "truth",
+    "measured",
+    "metrics",
+    "notes"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "experimentId": {
+      "type": "string",
+      "enum": ["signal", "filtering", "edges", "regions", "geometry", "learning", "depth", "motion"]
+    },
+    "sceneSeed": { "type": "integer", "minimum": 1 },
+    "engineId": { "type": "string", "enum": ["cpu", "webgpu"] },
+    "engineDescribe": { "type": "string", "minLength": 1 },
+    "truth": { "$ref": "#/$defs/stage" },
+    "measured": { "$ref": "#/$defs/stage" },
+    "metrics": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": ["number", "string", "null"],
+        "description": "A measured number, a fixed descriptor, or null when the measurement could not be taken."
+      }
+    },
+    "notes": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mask", "label"],
+      "properties": {
+        "mask": {
+          "type": "object",
+          "description": "Binary row-major labelling of width*height entries, stored as a typed array in the running application.",
+          "required": ["length"],
+          "properties": { "length": { "type": "integer", "minimum": 1 } }
+        },
+        "label": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

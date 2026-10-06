@@ -1,0 +1,335 @@
+@import "@fontsource-variable/dm-sans";
+@import "@fontsource/ibm-plex-mono/400.css";
+
+:root {
+  --ink: #e9edf1;
+  --muted: #9aa5b1;
+  --lime: #b7f45d;
+  --panel: #121416;
+  --edge: #22262b;
+  --bg: #0b0c0d;
+  --mono: ui-monospace, "SFMono-Regular", "IBM Plex Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "DM Sans Variable", "DM Sans", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: #0b0c0d;
+  font-family: var(--mono);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.locale {
+  border: 1px solid var(--edge);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.locale:hover {
+  border-color: var(--lime);
+}
+
+.intro {
+  color: var(--muted);
+  max-width: 62ch;
+  margin: 20px 0 24px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--edge);
+  border-bottom: 1px solid var(--edge);
+  padding: 12px 0;
+}
+
+.layer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.layer {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid var(--edge);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.layer .index {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+}
+
+.layer.active {
+  border-color: var(--lime);
+  color: var(--ink);
+  background: rgba(183, 244, 93, 0.08);
+}
+
+.seed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.seed input {
+  width: 96px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  color: var(--ink);
+  padding: 5px 8px;
+  font-family: var(--mono);
+}
+
+.seed button {
+  background: transparent;
+  border: 1px solid var(--edge);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 26px 0;
+}
+
+.panel {
+  margin: 0;
+}
+
+.panel canvas {
+  display: block;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  image-rendering: pixelated;
+  background: var(--panel);
+}
+
+.panel figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
+.reading h2,
+.metrics h2,
+.engine h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 28px 0 10px;
+}
+
+.reading h2 .index {
+  font-family: var(--mono);
+  color: var(--lime);
+  margin-right: 6px;
+}
+
+.question {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+}
+
+.reading dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 6px 16px;
+  font-size: 0.88rem;
+}
+
+.reading dt {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.reading dd {
+  margin: 0;
+}
+
+.reading dd.warning {
+  color: #f0c674;
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 14px;
+  font-size: 0.78rem;
+}
+
+.sources a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--edge);
+}
+
+.sources a:hover {
+  color: var(--lime);
+  border-bottom-color: var(--lime);
+}
+
+.metrics table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.metrics th,
+.metrics td {
+  text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--edge);
+}
+
+.metrics th {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.metrics tr.headline td {
+  color: var(--lime);
+}
+
+.notes {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 14px;
+}
+
+.engine ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.engine li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  color: var(--muted);
+}
+
+.engine li strong {
+  font-family: var(--mono);
+  font-weight: 400;
+  color: var(--ink);
+  min-width: 90px;
+}
+
+.probe {
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--edge);
+  color: var(--muted);
+  font-size: 0.8rem;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .reading dl {
+    grid-template-columns: 1fr;
+  }
+
+  .stage {
+    flex-direction: column;
+  }
+}
