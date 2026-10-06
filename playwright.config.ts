@@ -21,6 +21,24 @@ export default defineConfig({
         timeout: 180_000,
       },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Headless Chromium exposes navigator.gpu but hands back no adapter
+        // unless the software backend is requested explicitly. The laboratory
+        // reports a null adapter as a fact rather than skipping, so the test
+        // environment has to make the adapter real.
+        launchOptions: {
+          args: [
+            "--enable-unsafe-webgpu",
+            "--enable-features=Vulkan",
+            "--use-webgpu-adapter=swiftshader",
+            "--use-angle=swiftshader",
+            "--disable-gpu-sandbox",
+          ],
+        },
+      },
+    },
   ],
 });

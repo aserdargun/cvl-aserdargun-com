@@ -3,6 +3,15 @@ import { expect, test } from "@playwright/test";
 // The laboratory must render, measure and report in a real browser. Anything
 // asserted here is asserted against the same public surface a reader sees.
 
+// Waiting for the table alone can catch the previous layer's rows, because the
+// measurement runs on a timer. Waiting for a row only the new layer produces
+// makes the read unambiguous.
+async function waitForMetric(page: import("@playwright/test").Page, key: string): Promise<void> {
+  // The row text is the key and the value concatenated by the browser, so the
+  // filter matches the key alone.
+  await expect(page.getByTestId("metrics-table").locator("tr").filter({ hasText: key }).first()).toBeVisible();
+}
+
 test.describe("laboratory", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
@@ -25,37 +34,52 @@ test.describe("laboratory", () => {
   });
 
   test("every layer reports a measured number", async ({ page }) => {
-    for (const layer of ["signal", "filtering", "edges", "regions", "geometry", "learning", "depth", "motion"]) {
+    const headline: Record<string, string> = {
+      signal: "psnr",
+      filtering: "separableVsNaiveRmse",
+      edges: "precision",
+      regions: "meanIoU",
+      geometry: "recall",
+      learning: "iouDelta",
+      depth: "objectsMeasured",
+      motion: "validRatio",
+    };
+    for (const [layer, key] of Object.entries(headline)) {
       await page.getByTestId(`layer-${layer}`).click();
-      const table = page.getByTestId("metrics-table");
-      await expect(table).toBeVisible();
-      const rows = await table.locator("tr").count();
-      expect(rows, `layer ${layer} must report at least one metric`).toBeGreaterThan(0);
+      await waitForMetric(page, key);
+      expect(await page.getByTestId("metrics-table").locator("tr").count(), `layer ${layer}`).toBeGreaterThan(0);
     }
   });
 
   test("the same seed reproduces the same measurement", async ({ page }) => {
     await page.getByTestId("layer-edges").click();
-    await expect(page.getByTestId("metrics-table")).toBeVisible();
+    await waitForMetric(page, "precision");
     const first = await page.getByTestId("metrics-table").innerText();
     await page.getByTestId("seed-input").fill("4242");
+    await page.getByTestId("layer-filtering").click();
     await page.getByTestId("layer-edges").click();
-    const changed = await page.getByTestId("metrics-table").innerText();
-    expect(changed).not.toBe(first);
+    await waitForMetric(page, "precision");
+    expect(await page.getByTestId("metrics-table").innerText()).not.toBe(first);
     await page.getByTestId("seed-input").fill("20261006");
+    await page.getByTestId("layer-filtering").click();
     await page.getByTestId("layer-edges").click();
-    const back = await page.getByTestId("metrics-table").innerText();
-    expect(back).toBe(first);
+    await waitForMetric(page, "precision");
+    expect(await page.getByTestId("metrics-table").innerText()).toBe(first);
   });
 
   test("switching language changes the reading, not the numbers", async ({ page }) => {
     await page.getByTestId("layer-depth").click();
-    await expect(page.getByTestId("metrics-table")).toBeVisible();
-    const before = await page.getByTestId("metrics-table").innerText();
+    await waitForMetric(page, "objectsMeasured");
+    // Numbers only: a metric that could not be taken is written in the reader's
+    // language, so the raw table text is expected to change.
+    const numbers = () =>
+      page.getByTestId("metrics-table").locator("tr").evaluateAll((rows) =>
+        rows.map((row) => `${(row as HTMLElement).querySelector("th")!.textContent}=${(row as HTMLElement).querySelector("td")!.textContent}`),
+      );
+    const before = await numbers();
     await page.getByTestId("locale-toggle").click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Computer Vision Laboratory");
-    const after = await page.getByTestId("metrics-table").innerText();
-    expect(after).toBe(before);
+    expect(await numbers()).toEqual(before);
   });
 
   test("the engine report names every layer and its honest reason", async ({ page }) => {

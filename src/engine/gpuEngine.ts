@@ -33,6 +33,15 @@ export interface ParityResult {
   maxAbsDifference: number;
   withinTolerance: boolean;
   tolerance: number;
+  /** Level means, so a reader can tell a rounding difference from a wrong result. */
+  meanMeasured: number;
+  meanReference: number;
+  meanInput: number;
+  firstPixels: { measured: number[]; reference: number[]; input: number[] };
+  /** Pixel index of the largest disagreement, so a failure can be located. */
+  worstIndex: number;
+  worstGpu: number;
+  worstReference: number;
 }
 
 export const PARITY_TOLERANCE = 1e-3;
@@ -109,12 +118,16 @@ export async function gpuGaussianBlurAndCompare(
   const kernel = gaussianKernel(sigma);
   const radius = (kernel.length - 1) / 2;
 
-  const inputBuffer = device.createBuffer({ size: input.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-  device.queue.writeBuffer(inputBuffer, 0, input);
+  // WebGPU storage buffers are f32. Uploading the f64 reference bytes would be
+  // read back as a different set of numbers entirely, so the conversion is
+  // explicit here and the f32 versus f64 difference is what parity measures.
+  const upload = Float32Array.from(input);
+  const inputBuffer = device.createBuffer({ size: upload.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+  device.queue.writeBuffer(inputBuffer, 0, upload);
 
-  const scratch = device.createBuffer({ size: input.byteLength, usage: GPUBufferUsage.STORAGE });
-  const result = device.createBuffer({ size: input.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
-  const readback = device.createBuffer({ size: input.byteLength, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+  const scratch = device.createBuffer({ size: upload.byteLength, usage: GPUBufferUsage.STORAGE });
+  const result = device.createBuffer({ size: upload.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
+  const readback = device.createBuffer({ size: upload.byteLength, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
 
   const uniform = device.createBuffer({ size: UNIFORM_BYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   const params = new ArrayBuffer(UNIFORM_BYTES);
@@ -125,12 +138,21 @@ export async function gpuGaussianBlurAndCompare(
   view.setFloat32(12, sigma, true);
   device.queue.writeBuffer(uniform, 0, params);
 
-  const runPass = async (code: string, source: GPUBuffer, destination: GPUBuffer): Promise<void> => {
-    const pipeline = device.createComputePipeline({
+  // Both passes go into one compute pass. The horizontal pass writes the
+  // intermediate that the vertical pass reads, so the two dispatches have to be
+  // separated by the pass's own usage scope rather than by two submissions:
+  // across submissions the readback ordering is not something the application
+  // should have to reason about.
+  const makePipeline = (code: string) =>
+    device.createComputePipeline({
       layout: "auto",
       compute: { module: device.createShaderModule({ code }), entryPoint: "main" },
     });
-    const bindGroup = device.createBindGroup({
+
+  const horizontal = makePipeline(GAUSSIAN_HORIZONTAL);
+  const vertical = makePipeline(GAUSSIAN_VERTICAL);
+  const bind = (pipeline: ReturnType<typeof makePipeline>, source: GPUBuffer, destination: GPUBuffer) =>
+    device.createBindGroup({
       layout: pipeline.getBindGroupLayout(0),
       entries: [
         { binding: 0, resource: { buffer: source } },
@@ -138,27 +160,42 @@ export async function gpuGaussianBlurAndCompare(
         { binding: 2, resource: { buffer: uniform } },
       ],
     });
-    const encoder = device.createCommandEncoder();
-    const pass = encoder.beginComputePass();
-    pass.setPipeline(pipeline);
-    pass.setBindGroup(0, bindGroup);
-    pass.dispatchWorkgroups(Math.ceil((size.width * size.height) / 64));
-    pass.end();
-    device.queue.submit([encoder.finish()]);
-    await device.queue.onSubmittedWorkDone();
-  };
 
-  await runPass(GAUSSIAN_HORIZONTAL, inputBuffer, scratch);
-  await runPass(GAUSSIAN_VERTICAL, scratch, result);
+  const groups = Math.ceil((size.width * size.height) / 64);
+  const blurEncoder = device.createCommandEncoder();
+  const passEncoder = blurEncoder.beginComputePass();
+  passEncoder.setPipeline(horizontal);
+  passEncoder.setBindGroup(0, bind(horizontal, inputBuffer, scratch));
+  passEncoder.dispatchWorkgroups(groups);
+  passEncoder.setPipeline(vertical);
+  passEncoder.setBindGroup(0, bind(vertical, scratch, result));
+  passEncoder.dispatchWorkgroups(groups);
+  passEncoder.end();
+  const blurCommands = blurEncoder.finish();
+
   const encoder = device.createCommandEncoder();
-  encoder.copyBufferToBuffer(result, 0, readback, 0, input.byteLength);
-  device.queue.submit([encoder.finish()]);
+  encoder.copyBufferToBuffer(result, 0, readback, 0, upload.byteLength);
+  device.queue.submit([blurCommands, encoder.finish()]);
   await readback.mapAsync(GPUMapMode.READ);
   const measured = new Float32Array(readback.getMappedRange().slice(0));
 
   let maxAbs = 0;
-  for (let i = 0; i < measured.length; i += 1) maxAbs = Math.max(maxAbs, Math.abs(measured[i] - reference[i]));
+  let worstIndex = 0;
+  let sumMeasured = 0;
+  let sumReference = 0;
+  let sumInput = 0;
+  for (let i = 0; i < measured.length; i += 1) {
+    const difference = Math.abs(measured[i] - reference[i]);
+    if (difference > maxAbs) {
+      maxAbs = difference;
+      worstIndex = i;
+    }
+    sumMeasured += measured[i];
+    sumReference += reference[i];
+    sumInput += input[i];
+  }
   const rmse = rootMeanSquareError(reference, measured);
+  const count = Math.max(1, measured.length);
 
   for (const buffer of [inputBuffer, scratch, result, readback, uniform]) buffer.destroy();
 
@@ -168,6 +205,17 @@ export async function gpuGaussianBlurAndCompare(
     maxAbsDifference: maxAbs,
     withinTolerance: rmse <= PARITY_TOLERANCE,
     tolerance: PARITY_TOLERANCE,
+    meanMeasured: sumMeasured / count,
+    meanReference: sumReference / count,
+    meanInput: sumInput / count,
+    worstIndex,
+    worstGpu: measured[worstIndex],
+    worstReference: reference[worstIndex],
+    firstPixels: {
+      measured: Array.from(measured.slice(0, 6)),
+      reference: Array.from(reference.slice(0, 6)),
+      input: Array.from(input.slice(0, 6)),
+    },
   };
 }
 
