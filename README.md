@@ -3,9 +3,12 @@
 **Sentetik sahne. Bilinen cevap. Ölçülen algı.**
 **Synthetic scene. Known truth. Measured perception.**
 
-VIS'in *ölçüm* yarısı. VIS bir bilgi bankasıdır: yedi algı katmanını birincil kaynaklara bağlı
-olarak açıklar ve ölçmez. CVL o fikirlerin her birini, sahneyle birlikte çizilen piksel cevap
-anahtarına karşı ölçer.
+VIS'in *ölçüm* yarısıdır. [VIS](https://vis.aserdargun.com/) bir bilgi bankasıdır: yedi algı
+katmanını birincil kaynaklara bağlı olarak açıklar ve ölçmez. **CVL açıklamaz, ölçer.** O
+fikirlerin her birini, sahneyle birlikte çizilen piksel cevap anahtarına kar hesaplar; bir
+işleçin ne yaptığını ve nerede durduğunu soran sorular ise VIS'te, kaynaklarıyla birlikte
+yanıtlanır. Bu yüzden CVL'de açıklama metni yoktur; her katmanın altında o katmanın okunacağı
+bilgi bankası bağlantısı vardır.
 
 Bu yüzden buradaki her sayı bir ölçümdür. Sahne sentetiktir, çizgileri prosedürel olarak
 üretilir ve **yanına cevap anahtarı aynı geçişte yazılır**. Eğer resimle anahtar ayrışabilseydi,
@@ -59,7 +62,7 @@ npm stop
 | `npm run build` | tsc, Vite derlemesi, `release.json`, artifact doğrulaması |
 | `npm run preview` | derlenmiş uygulama, http://127.0.0.1:8073 |
 | `npm test` | 12 alan testi: determinizm, sözleşme, operatör, metrik, öğrenme |
-| `npm run test:ui` | 8 tarayıcı testi: akış, yeniden üretim, WebGPU paraleliği |
+| `npm run test:ui` | 10 tarayıcı testi: akış, yeniden üretim, VIS sınırı, WebGPU paraleliği |
 | `npm run validate` | lint + build + alan + tarayıcı |
 | `npm run verify:live` | yayınlanan adresi doğrular |
 
@@ -75,10 +78,16 @@ etmedim" ile "GPU yolu çalışıyor" arasındaki fark, laboratuvarın varlık s
   adım adım raporlanır.
 - `no-silent-fallback` — ölçülemeyen sayı `null` olur, asla NaN veya önceki değer taşınmaz.
 
-## aserdargun.com içindeki yeri
+## VIS ile sınır
 
-CVL, [VIS](https://vis.aserdargun.com/) bilgi bankasının alt uygulamasıdır: VIS açıklar, CVL
-ölçer. Bağlantı öğrenme ilişkisidir; çalışma, onay veya veri aktarımı değildir.
+CVL, [VIS](https://vis.aserdargun.com/) bilgi bankasının ölçüm yarısıdır ve iki uygulama
+birbirinin kopyası değildir:
+
+- **CVL ölçer.** Kaynak gösteremez, bu yüzden bir işleci açıklamaz.
+- **VIS açıklar.** Motor içermez, bu yüzden ölçüm iddiasında bulunamaz.
+
+Sınır arayüzde görünürdür: her CVL katmanı, kendi okuması için VIS'e giden bir bağlantı taşır.
+Bağlantı öğrenme ilişkisidir; çalışma, onay veya veri aktarımı değildir.
 
 ## Kapsam
 

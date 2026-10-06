@@ -91,6 +91,31 @@ test.describe("laboratory", () => {
     await expect(page.getByTestId("adapter-probe")).toContainText("secureContext");
   });
 
+  test("every layer sends the reader to VIS for its reading", async ({ page }) => {
+    for (const layer of ["signal", "filtering", "edges", "regions", "geometry", "learning", "depth", "motion"]) {
+      await page.getByTestId(`layer-${layer}`).click();
+      const link = page.getByTestId("read-in-vis");
+      // The explanation lives in the knowledge bank, so the link must leave.
+      await expect(link).toHaveAttribute("href", `https://vis.aserdargun.com/#katman-${layer}`);
+      await expect(link).toHaveAttribute("target", "_blank");
+      await expect(link).toHaveAttribute("rel", "noreferrer");
+    }
+  });
+
+  test("the laboratory does not explain what it measures", async ({ page }) => {
+    // CVL measures; VIS explains. The question, the method, the boundary statement and the
+    // sources were removed from this surface so that one explanation exists, not two.
+    await page.getByTestId("layer-edges").click();
+    await waitForMetric(page, "precision");
+    const reading = page.getByTestId("reading");
+    await expect(reading).toContainText("VIS");
+    for (const heading of ["Yöntem", "Method", "Ne için değil", "What it is not for", "Kaynaklar", "Sources"]) {
+      await expect(page.getByText(heading, { exact: true })).toHaveCount(0);
+    }
+    // No external citation is presented here; only the link to the bank that holds them.
+    await expect(reading.locator("a")).toHaveCount(1);
+  });
+
   test("nothing overflows horizontally on a phone viewport", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();

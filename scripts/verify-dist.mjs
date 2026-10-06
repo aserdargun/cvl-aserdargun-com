@@ -12,7 +12,7 @@ else {
   if (!existsSync(indexPath)) problems.push("dist/index.html is missing");
   else {
     const html = readFileSync(indexPath, "utf8");
-    if (!/<title>CVL - Vision Laboratory<\/title>/.test(html)) problems.push("index.html does not carry the CVL identity");
+    if (!/<title>CVL - Computer Vision Laboratory<\/title>/.test(html)) problems.push("index.html does not carry the CVL identity");
     if (!/id="root"/.test(html)) problems.push("index.html has no mount point");
     if (html.includes("localhost:8072")) problems.push("index.html references a development address");
   }

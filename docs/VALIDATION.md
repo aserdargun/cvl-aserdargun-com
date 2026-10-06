@@ -11,7 +11,20 @@
 | Artifact | `npm run build` | `dist/` carries the identity, the mount point, the schema and the release record. |
 | Browser flows | `npm run test:ui` | The page renders, measures, reproduces and survives a phone viewport. |
 | WebGPU parity | `npm run test:ui` | A real adapter agrees with the CPU within 1e-3, or the run fails. |
+| The split | `npm run test:ui` | Every layer links out to VIS for its reading, and no method, boundary statement or source is duplicated here. |
 | Published build | `npm run verify:live` | The deployed address serves this identity and this commit. |
+
+## The split with VIS, and why it is tested
+
+CVL measures; [VIS](https://vis.aserdargun.com/) explains. The prose that used to sit beside
+every measurement here — the question, the method, what an operator is not for, the sources —
+was removed rather than reworded, so that one explanation exists in one place.
+
+A duplicated explanation fails quietly: it does not break a build, it simply becomes wrong in
+one of the two copies. The browser suite therefore asserts the absence directly. For every one
+of the eight layers it checks that a `read-in-vis` link points at
+`https://vis.aserdargun.com/#katman-<layer>`, and it checks that no method heading, boundary
+heading or source link is rendered on the measuring surface at all.
 
 ## The GPU test does not skip
 

@@ -11,6 +11,21 @@ the key out of the class map and scores it against the painted key. An intersect
 below 1.0 means the picture and the answer key disagree, and every other number in the
 application is void.
 
+## The other rule: CVL measures, VIS explains
+
+This laboratory holds no explanation. The question a layer asks, the method it describes, what
+it is explicitly *not* for and the sources behind those claims all live in the knowledge bank at
+https://vis.aserdargun.com/.
+
+The reason is duplication risk. A method described twice will eventually be described
+differently, and the reader has no way to tell which copy is current. One explanation, in one
+place, cited to primary sources; one measurement, here, recomputable by the reader.
+
+The boundary is visible in the interface rather than only in this document: every layer carries
+a `read-in-vis` link pointing at the knowledge-bank layer that explains it, and that is the only
+link in the section. `tests/browser/browser.spec.ts` asserts both directions of the contract —
+that the reading is present and that no method, boundary or source is duplicated here.
+
 ## Modules
 
 | Module | Responsibility |

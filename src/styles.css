@@ -201,53 +201,27 @@ h1 {
   margin-right: 6px;
 }
 
-.question {
+.reading-note {
   margin: 0 0 14px;
-  font-size: 1.05rem;
-}
-
-.reading dl {
-  margin: 0;
-  display: grid;
-  grid-template-columns: 130px 1fr;
-  gap: 6px 16px;
-  font-size: 0.88rem;
-}
-
-.reading dt {
+  font-size: 0.92rem;
   color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  max-width: 62ch;
 }
 
-.reading dd {
-  margin: 0;
-}
-
-.reading dd.warning {
-  color: #f0c674;
-}
-
-.sources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+.read-in-vis {
+  display: inline-flex;
   align-items: center;
-  margin-top: 14px;
-  font-size: 0.78rem;
-}
-
-.sources a {
-  color: var(--muted);
-  text-decoration: none;
-  border-bottom: 1px dotted var(--edge);
-}
-
-.sources a:hover {
+  gap: 8px;
+  font-size: 0.82rem;
   color: var(--lime);
-  border-bottom-color: var(--lime);
+  text-decoration: none;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  padding: 7px 12px;
+}
+
+.read-in-vis:hover {
+  border-color: var(--lime);
 }
 
 .metrics table {
@@ -325,10 +299,6 @@ h1 {
 }
 
 @media (max-width: 720px) {
-  .reading dl {
-    grid-template-columns: 1fr;
-  }
-
   .stage {
     flex-direction: column;
   }

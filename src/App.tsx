@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Cpu, Globe, BookOpen, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { layerContent, LAYER_CONTENT } from "./content/experiments";
+import { Layers, Cpu, Globe, ExternalLink, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { layerContent, LAYER_CONTENT, readingLink } from "./content/experiments";
 import { UI, localized, type Locale } from "./content/i18n";
 import { LAYERS, runLayer } from "./engine/pipeline";
 import { buildScene } from "./engine/scene";
@@ -147,25 +147,21 @@ export default function App(): React.JSX.Element {
         <Panel title={t(UI.measured)} values={run ? run.measured.mask : scene.truth.foreground} scene={scene} tone="ink" />
       </section>
 
-      <section className="reading">
+      <section className="reading" data-testid="reading">
         <h2>
           <span className="index">{content.index}</span> {localized(locale, content.title)}
         </h2>
-        <p className="question">{localized(locale, content.question)}</p>
-        <dl>
-          <dt>{t(UI.method)}</dt>
-          <dd>{localized(locale, content.method)}</dd>
-          <dt>{t(UI.notFor)}</dt>
-          <dd className="warning">{localized(locale, content.notFor)}</dd>
-        </dl>
-        <div className="sources">
-          <BookOpen size={14} aria-hidden="true" />
-          {content.sources.map((source) => (
-            <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
-              {source.label}
-            </a>
-          ))}
-        </div>
+        <p className="reading-note">{t(UI.readingNote)}</p>
+        <a
+          className="read-in-vis"
+          href={readingLink(content.readsIn)}
+          target="_blank"
+          rel="noreferrer"
+          data-testid="read-in-vis"
+        >
+          <ExternalLink size={14} aria-hidden="true" />
+          {t(UI.readInVis)}
+        </a>
       </section>
 
       <section className="metrics" aria-label={t(UI.metrics)}>
