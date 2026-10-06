@@ -18,7 +18,7 @@ const problems = [];
 
 const index = await get(`${baseUrl}/`);
 if (index.status !== 200) problems.push(`index returned ${index.status}`);
-if (!/<title>CVL - Vision Laboratory<\/title>/.test(index.body)) problems.push("index does not carry the CVL identity");
+if (!/<title>CVL - Computer Vision Laboratory<\/title>/.test(index.body)) problems.push("index does not carry the CVL identity");
 
 let release = null;
 try {
