@@ -123,4 +123,21 @@ test.describe("laboratory", () => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);
   });
+
+  test("a deep link from the knowledge bank opens the layer it names", async ({ page }) => {
+    // The receiving half of the boundary contract. VIS sends every "measure this"
+    // button here as `cvl.aserdargun.com/#katman-<layer>`; if the fragment were
+    // ignored, the reader would land on the default layer and measure something
+    // other than the concept they clicked. The metric that differs per layer is
+    // what proves the right one was selected rather than merely the right URL.
+    for (const [layer, metric] of [
+      ["signal", "psnr"],
+      ["regions", "meanIoU"],
+      ["motion", "meanEndpointError"],
+    ] as const) {
+      await page.goto(`/#katman-${layer}`);
+      await waitForMetric(page, metric);
+      await expect(page.getByTestId(`layer-${layer}`)).toHaveClass(/active/);
+    }
+  });
 });

@@ -61,6 +61,23 @@ export default function App(): React.JSX.Element {
 
   const scene = useMemo(() => buildScene({ seed }), [seed]);
 
+  // The knowledge bank links here as `cvl.aserdargun.com/#katman-<layer>`. This
+  // application measures one layer at a time behind a button, so the fragment is
+  // the only thing that can carry the reader's choice across the page load — and
+  // without it every "Bunu ölç" link opens the laboratory on its default layer
+  // instead of the one the concept named.
+  useEffect(() => {
+    const fromHash = (): void => {
+      const id = window.location.hash.slice(1);
+      if (!id.startsWith("katman-")) return;
+      const requested = id.slice("katman-".length) as LayerId;
+      if (LAYERS.includes(requested)) setLayer(requested);
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+  }, []);
+
   useEffect(() => {
     setBusy(true);
     // Yield once so the interface can paint the "measuring" state before a
@@ -116,7 +133,14 @@ export default function App(): React.JSX.Element {
                 type="button"
                 key={id}
                 className={id === layer ? "layer active" : "layer"}
-                onClick={() => setLayer(id)}
+                // The fragment is kept in step with the selected layer so the URL
+                // names what is on screen: a reader who copies the address sends
+                // the measurement they are looking at, not the default one.
+                id={`katman-${id}`}
+                onClick={() => {
+                  setLayer(id);
+                  window.history.replaceState(null, "", `#katman-${id}`);
+                }}
                 data-testid={`layer-${id}`}
               >
                 <span className="index">{entry.index}</span>
