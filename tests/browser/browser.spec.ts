@@ -73,9 +73,14 @@ test.describe("laboratory", () => {
     // Numbers only: a metric that could not be taken is written in the reader's
     // language, so the raw table text is expected to change.
     const numbers = () =>
-      page.getByTestId("metrics-table").locator("tr").evaluateAll((rows) =>
-        rows.map((row) => `${(row as HTMLElement).querySelector("th")!.textContent}=${(row as HTMLElement).querySelector("td")!.textContent}`),
-      );
+      page
+        .getByTestId("metrics-table")
+        .locator("tr")
+        .evaluateAll((rows) =>
+          rows.map(
+            (row) => `${(row as HTMLElement).querySelector("th")!.textContent}=${(row as HTMLElement).querySelector("td")!.textContent}`,
+          ),
+        );
     const before = await numbers();
     await page.getByTestId("locale-toggle").click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Computer Vision Laboratory");
@@ -92,11 +97,22 @@ test.describe("laboratory", () => {
   });
 
   test("every layer sends the reader to VIS for its reading", async ({ page }) => {
-    for (const layer of ["signal", "filtering", "edges", "regions", "geometry", "learning", "depth", "motion"]) {
+    // Seven measured layers read in themselves; depth reads in Geometry, because
+    // the knowledge bank publishes seven layers and has no depth layer to land on.
+    for (const [layer, readsIn] of [
+      ["signal", "signal"],
+      ["filtering", "filtering"],
+      ["edges", "edges"],
+      ["regions", "regions"],
+      ["geometry", "geometry"],
+      ["learning", "learning"],
+      ["depth", "geometry"],
+      ["motion", "motion"],
+    ] as const) {
       await page.getByTestId(`layer-${layer}`).click();
       const link = page.getByTestId("read-in-vis");
       // The explanation lives in the knowledge bank, so the link must leave.
-      await expect(link).toHaveAttribute("href", `https://vis.aserdargun.com/#katman-${layer}`);
+      await expect(link).toHaveAttribute("href", `https://vis.aserdargun.com/#katman-${readsIn}`);
       await expect(link).toHaveAttribute("target", "_blank");
       await expect(link).toHaveAttribute("rel", "noreferrer");
     }

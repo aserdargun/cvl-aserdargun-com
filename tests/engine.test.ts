@@ -15,6 +15,7 @@ import {
 } from "../src/engine/ops";
 import { buildScene, objectMasks } from "../src/engine/scene";
 import { LAYERS, contractRun, runLayer } from "../src/engine/pipeline";
+import { KNOWLEDGE_LAYERS, LAYER_CONTENT, readingLink } from "../src/content/experiments";
 
 const SEED = 20261006;
 
@@ -155,7 +156,13 @@ describe("learned path", () => {
     const truth = downsampleMask(scene.truth.foreground, scene.size, 2);
     const net = createNetwork(scene.seed + 3);
     const weights = balancedWeights(truth);
-    const trained = train(net, small.image, truth, small.size, { iterations: 250, learningRate: 0.3, stride: 1, positiveWeight: weights.positiveWeight, negativeWeight: weights.negativeWeight });
+    const trained = train(net, small.image, truth, small.size, {
+      iterations: 250,
+      learningRate: 0.3,
+      stride: 1,
+      positiveWeight: weights.positiveWeight,
+      negativeWeight: weights.negativeWeight,
+    });
     expect(trained.loss.length).toBe(250);
     expect(trained.loss.at(-1)!).toBeLessThan(trained.loss[0]);
     const predicted = predictMask(trained.net, small.image, small.size);
@@ -183,5 +190,40 @@ describe("pipeline", () => {
     const a = runLayer("edges", scene).metrics;
     const b = runLayer("edges", scene).metrics;
     expect(a).toEqual(b);
+  });
+});
+// The two applications share a vocabulary across two repositories and no shared
+// code. VIS links here as `cvl.aserdargun.com/#katman-<layer>`, and this
+// laboratory links back as `vis.aserdargun.com/#katman-<layer>`; both receivers
+// return silently on an unknown id, so a divergence cannot announce itself. These
+// tests pin the contract from this side so the failure lands on a gate instead of
+// on a reader's screen.
+describe("the boundary with the knowledge bank", () => {
+  test("measures the eight layers the knowledge bank names, in that order", () => {
+    // VIS mirrors this exact list in src/content/laboratory-link.ts.
+    expect(LAYERS).toEqual(["signal", "filtering", "edges", "regions", "geometry", "learning", "depth", "motion"]);
+  });
+
+  test("presents every measured layer in the order it is measured", () => {
+    expect(LAYER_CONTENT.map((layer) => layer.id)).toEqual(LAYERS);
+    expect(LAYER_CONTENT.map((layer) => layer.index)).toEqual(["01", "02", "03", "04", "05", "06", "07", "08"]);
+  });
+
+  test("sends every reading to a layer the knowledge bank actually publishes", () => {
+    // VIS publishes seven layers; this laboratory measures eight. Depth is the
+    // measured layer with no bank layer of its own, so it reads in Geometry,
+    // which is where the horizon and scale-relative structure it relies on are
+    // explained. A reading naming a layer VIS does not have would open the top
+    // of the bank with no indication that anything was missing.
+    for (const layer of LAYER_CONTENT) {
+      expect(KNOWLEDGE_LAYERS, `${layer.id} reads in unpublished ${layer.readsIn}`).toContain(layer.readsIn);
+    }
+    expect(LAYER_CONTENT.filter((layer) => layer.readsIn === layer.id)).toHaveLength(7);
+  });
+
+  test("builds each reading link so the bank can resolve it", () => {
+    for (const layer of KNOWLEDGE_LAYERS) {
+      expect(readingLink(layer)).toBe(`https://vis.aserdargun.com/#katman-${layer}`);
+    }
   });
 });
